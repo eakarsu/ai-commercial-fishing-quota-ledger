@@ -1,0 +1,359 @@
+// Generated schema — modeled after beautyhqio conventions.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  active       Boolean @default(true)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(ANALYST)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ANALYST
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String?
+  action    String
+  entity    String
+  entityId  String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model WorkflowAnalysis {
+ id String @id @default(cuid())
+ actorId String
+ workflow String
+ subjectEntity String
+ subjectId String
+ input Json
+ evidence Json
+ evidenceHash String
+ result Json
+ model String
+ receipt String?
+ createdAt DateTime @default(now())
+ @@index([workflow, createdAt])
+}
+model RecordReview {
+ id String @id @default(cuid())
+ actorId String
+ entity String
+ entityId String
+ version String
+ reason String
+ createdAt DateTime @default(now())
+ @@unique([entity, entityId, version, actorId])
+}
+model UsageBucket {
+ id String @id
+ calls Int
+}
+model IssuedCredential {
+ token String @id
+ entity String
+ entityId String
+ version String
+ assertion Json
+ createdAt DateTime @default(now())
+ revokedAt DateTime?
+ @@index([entity, entityId, createdAt])
+}
+
+model DomainArtifact {
+ id String @id @default(cuid())
+ subjectEntity String
+ subjectId String
+ title String
+ content String
+ contentHash String
+ actorId String
+ approvedBy String?
+ createdAt DateTime @default(now())
+ @@index([subjectEntity, subjectId])
+}
+
+model RecordApproval {
+ id String @id
+ version String
+}
+model DomainExecution {
+ id String @id
+ actorId String
+ connectorId String
+ action String
+ subjectEntity String
+ subjectId String
+ version String
+ status String
+ result Json?
+ createdAt DateTime @default(now())
+}
+
+model WorkSession {
+ id String @id @default(cuid())
+ actorId String
+ respondentId String
+ subjectEntity String
+ subjectId String
+ questions Json
+ answers Json
+ currentQuestion String?
+ status String
+ deadline DateTime
+ createdAt DateTime @default(now())
+ @@index([respondentId, createdAt])
+}
+model SessionMedia {
+ id String @id @default(cuid())
+ sessionId String
+ questionId String
+ actorId String
+ contentType String
+ bytes Bytes
+ contentHash String
+ createdAt DateTime @default(now())
+ @@index([sessionId])
+}
+
+model AppSetting {
+ id String @id
+ value Json
+ updatedAt DateTime @updatedAt
+}
+
+model QuotaAccount {
+ id String @id @default(cuid())
+ name String
+ accountNumber String
+ holder String
+ fishery String
+ species String
+ seasonStart DateTime
+ status String @default("Draft")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ inverseFishingVessel_quotaAccountId FishingVessel[] @relation("FishingVessel_quotaAccountId")
+ inverseQuotaAllocation_quotaAccountId QuotaAllocation[] @relation("QuotaAllocation_quotaAccountId")
+ inverseQuotaTransfer_quotaAccountId QuotaTransfer[] @relation("QuotaTransfer_quotaAccountId")
+ inverseFishingTrip_quotaAccountId FishingTrip[] @relation("FishingTrip_quotaAccountId")
+ inverseLandingRecord_quotaAccountId LandingRecord[] @relation("LandingRecord_quotaAccountId")
+ inverseLandingCorrection_quotaAccountId LandingCorrection[] @relation("LandingCorrection_quotaAccountId")
+ inverseQuotaLease_quotaAccountId QuotaLease[] @relation("QuotaLease_quotaAccountId")
+ inverseFisheryReport_quotaAccountId FisheryReport[] @relation("FisheryReport_quotaAccountId")
+ inverseOperationalTask_quotaAccountId OperationalTask[] @relation("OperationalTask_quotaAccountId")
+ inverseRuleVersion_quotaAccountId RuleVersion[] @relation("RuleVersion_quotaAccountId")
+ inverseDocumentRequirement_quotaAccountId DocumentRequirement[] @relation("DocumentRequirement_quotaAccountId")
+}
+
+model FishingVessel {
+ id String @id @default(cuid())
+ name String
+ registrationNumber String
+ permitNumber String
+ owner String
+ capacityKg Float
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("FishingVessel_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+ inverseFishingTrip_fishingVesselId FishingTrip[] @relation("FishingTrip_fishingVesselId")
+}
+
+model QuotaAllocation {
+ id String @id @default(cuid())
+ title String
+ allocationNumber String
+ allocatedKg Float
+ effectiveAt DateTime
+ authorizationReference String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("QuotaAllocation_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model QuotaTransfer {
+ id String @id @default(cuid())
+ title String
+ counterparty String
+ direction String
+ quantityKg Float
+ effectiveAt DateTime
+ authorizationReference String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("QuotaTransfer_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model FishingTrip {
+ id String @id @default(cuid())
+ title String
+ fishingVesselId String
+ tripNumber String
+ departedAt DateTime
+ returnedAt DateTime
+ area String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedFishingVesselId FishingVessel @relation("FishingTrip_fishingVesselId", fields: [fishingVesselId], references: [id], onDelete: Restrict)
+ linkedQuotaAccountId QuotaAccount @relation("FishingTrip_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+ inverseLandingRecord_fishingTripId LandingRecord[] @relation("LandingRecord_fishingTripId")
+}
+
+model LandingRecord {
+ id String @id @default(cuid())
+ title String
+ fishingTripId String
+ landedAt DateTime
+ species String
+ weightKg Float
+ dealer String
+ ticketNumber String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedFishingTripId FishingTrip @relation("LandingRecord_fishingTripId", fields: [fishingTripId], references: [id], onDelete: Restrict)
+ linkedQuotaAccountId QuotaAccount @relation("LandingRecord_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+ inverseLandingCorrection_landingRecordId LandingCorrection[] @relation("LandingCorrection_landingRecordId")
+}
+
+model LandingCorrection {
+ id String @id @default(cuid())
+ title String
+ landingRecordId String
+ correctedKg Float
+ reason String
+ correctedAt DateTime
+ evidence String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedLandingRecordId LandingRecord @relation("LandingCorrection_landingRecordId", fields: [landingRecordId], references: [id], onDelete: Restrict)
+ linkedQuotaAccountId QuotaAccount @relation("LandingCorrection_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model QuotaLease {
+ id String @id @default(cuid())
+ title String
+ counterparty String
+ direction String
+ quantityKg Float
+ startAt DateTime
+ endAt DateTime
+ authorizationReference String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("QuotaLease_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model FisheryReport {
+ id String @id @default(cuid())
+ title String
+ periodStart DateTime
+ periodEnd DateTime
+ reportedKg Float
+ preparer String
+ submissionReceipt String?
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("FisheryReport_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model OperationalTask {
+ id String @id @default(cuid())
+ title String
+ owner String
+ priority String
+ startAt DateTime
+ dueAt DateTime
+ done Boolean
+ notes String?
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("OperationalTask_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model RuleVersion {
+ id String @id @default(cuid())
+ title String
+ jurisdiction String
+ version String
+ effectiveAt DateTime
+ expiresAt DateTime?
+ sourceUrl String
+ requirementText String
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("RuleVersion_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}
+
+model DocumentRequirement {
+ id String @id @default(cuid())
+ title String
+ category String
+ requiredBy DateTime
+ sourceReference String
+ evidenceReference String?
+ reviewNotes String?
+ status String @default("Draft")
+ quotaAccountId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([quotaAccountId])
+ linkedQuotaAccountId QuotaAccount @relation("DocumentRequirement_quotaAccountId", fields: [quotaAccountId], references: [id], onDelete: Restrict)
+}

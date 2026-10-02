@@ -1,0 +1,69 @@
+[
+  {
+    "id": "domain-calculation",
+    "title": "Fishing quota balance",
+    "operation": "ledger",
+    "example": {
+      "unit": "kg of one species",
+      "opening": 5000,
+      "additions": [
+        {
+          "id": "lease-in",
+          "amount": 1000
+        }
+      ],
+      "deductions": [
+        {
+          "id": "landing-001",
+          "amount": 2700
+        },
+        {
+          "id": "landing-002",
+          "amount": 2500
+        }
+      ]
+    },
+    "description": "Reconcile one fishery/species/season and normalized unit, with duplicate transaction detection and explicit overage."
+  },
+  {
+    "id": "evidence-check",
+    "operation": "evidence",
+    "title": "Quota Account evidence checklist",
+    "description": "Check source presence against an explicitly supplied document list; reviewer assesses adequacy.",
+    "example": {
+      "requirements": [
+        {
+          "id": "source-1",
+          "requirement": "Fishing Vessel evidence",
+          "evidence": "Example source reference"
+        },
+        {
+          "id": "source-2",
+          "requirement": "Reviewed rule version",
+          "evidence": ""
+        }
+      ]
+    }
+  },
+  {
+    "id": "deadline-check",
+    "operation": "deadlines",
+    "title": "Operational deadline queue",
+    "description": "Compute overdue items from entered dates and completed flags; no external notifications.",
+    "example": {
+      "asOf": "2026-10-20T12:00:00Z",
+      "items": [
+        {
+          "id": "review-1",
+          "dueAt": "2026-10-18T00:00:00Z",
+          "completed": false
+        },
+        {
+          "id": "follow-up-1",
+          "dueAt": "2026-10-23T00:00:00Z",
+          "completed": false
+        }
+      ]
+    }
+  }
+]
